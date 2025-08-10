@@ -1,0 +1,52 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+# Core MCP and server dependencies
+mcp = ">=1.0.0"
+fastapi = ">=0.104.0"
+uvicorn = ">=0.24.0"
+websockets = ">=12.0"
+pydantic = ">=2.5.0"
+
+# System monitoring and process detection
+psutil = ">=5.9.0"
+requests = ">=2.31.0"
+httpx = ">=0.25.0"
+
+# Utilities
+python-dotenv = ">=1.0.0"
+pyyaml = ">=6.0.1"
+schedule = ">=1.2.0"
+watchdog = ">=3.0.0"
+
+# Optional: Enhanced logging and monitoring
+rich = ">=13.7.0"
+loguru = ">=0.7.0"
+
+# Serial communication (for direct device communication)
+pyserial = ">=3.5"
+
+[dev-packages]
+# Development and testing
+pytest = ">=7.4.0"
+pytest-asyncio = ">=0.21.0"
+pytest-cov = ">=4.1.0"
+pytest-mock = ">=3.12.0"
+
+# Hardware tools
+esptool = "*"
+adafruit-ampy = "*"
+rshell = "*"
+
+# Build and documentation tools
+build = "*"
+wheel = "*"
+setuptools = "*"
+sphinx = "*"
+sphinx-rtd-theme = "*"
+
+[requires]
+python_version = "3.8"
