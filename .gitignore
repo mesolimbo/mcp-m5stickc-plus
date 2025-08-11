@@ -1,1 +1,25 @@
 firmware_downloads
+
+# Credentials and secrets (never commit these!)
+config/credentials.txt
+credentials.txt
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Virtual environment
+.venv/
+venv/
+
+# IDE files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

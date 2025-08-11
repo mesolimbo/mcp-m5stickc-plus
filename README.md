@@ -68,15 +68,40 @@ echo '{
 ```
 
 ### M5StickC PLUS Firmware
-```bash
-# Flash MicroPython firmware
-esptool.py --port /dev/ttyUSB0 write_flash -z 0x1000 m5stick-micropython.bin
 
-# Upload application files
-ampy --port /dev/ttyUSB0 put main.py
-ampy --port /dev/ttyUSB0 put config.py
-ampy --port /dev/ttyUSB0 put wifi_config.py
+#### Prerequisites
+- Install pipenv dependencies: `pipenv install`
+- Connect M5StickC PLUS via USB cable
+- Identify COM port (typically COM4 on Windows)
+
+#### Flashing MicroPython v1.26.0 (Required)
+```bash
+# Step 1: Erase flash completely (removes any UIFlow firmware)
+pipenv run python -m esptool --port COM4 erase_flash
+
+# Step 2: Flash MicroPython v1.26.0 firmware
+pipenv run python -m esptool --port COM4 --baud 115200 write_flash 0x1000 firmware_downloads/ESP32_GENERIC-20250809-v1.26.0.bin
+
+# Step 3: Wait for device to reboot (5 seconds)
 ```
+
+#### Upload Application Files
+```bash
+# Test connection first
+pipenv run ampy --port COM4 ls
+
+# Upload main application files
+pipenv run ampy --port COM4 put firmware/main.py
+pipenv run ampy --port COM4 put config/device_config.py config.py
+pipenv run ampy --port COM4 put firmware/wifi_manager.py
+pipenv run ampy --port COM4 put firmware/display.py
+```
+
+#### Hardware Verification
+The device uses ESP32-PICO-D4 (revision v1.1) with MAC: 90:15:06:fa:b2:68
+- Display: ST7789V2 controller (135x240 resolution)
+- Requires hardware coordinate offsets: x+52, y+40
+- Power management: AXP192 chip (critical for display operation)
 
 ## Configuration
 
