@@ -59,7 +59,7 @@ class M5StickCDisplay:
         # ST7789 initialization
         self._cmd(0x01); time.sleep_ms(150)  # Software reset
         self._cmd(0x11); time.sleep_ms(120)  # Sleep out
-        self._cmd(0x36); self._data(0x70)    # Rotation for M5StickC PLUS
+        self._cmd(0x36); self._data(0x00)    # Correct landscape rotation for M5StickC PLUS
         self._cmd(0x3A); self._data(0x05)    # RGB565
         self._cmd(0x21)                      # Display inversion
         self._cmd(0x13)                      # Normal display mode

@@ -4,12 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-mcp = ">=1.0.0"
 fastapi = ">=0.104.0"
 uvicorn = ">=0.24.0"
 websockets = ">=12.0"
 pydantic = ">=2.5.0"
-psutil = ">=5.9.0"
 requests = ">=2.31.0"
 httpx = ">=0.25.0"
 python-dotenv = ">=1.0.0"
@@ -20,6 +18,9 @@ rich = ">=13.7.0"
 loguru = ">=0.7.0"
 pyserial = "*"
 esptool = "*"
+aiohttp = "*"
+psutil = "*"
+mcp = "*"
 
 [dev-packages]
 pytest = ">=7.4.0"
