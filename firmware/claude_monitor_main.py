@@ -81,6 +81,7 @@ class FramebufferDisplay:
             '.': [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b11000, 0b11000],
             '-': [0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000],
             '/': [0b00000, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b00000],
+            '!': [0b01110, 0b10001, 0b10101, 0b10001, 0b10001, 0b10001, 0b01110],  # Clock icon
         }
         
         self._init_display()
@@ -225,11 +226,10 @@ class FramebufferDisplay:
         
         # Real-time clock with background
         hours = current_time[3]
-        minutes = current_time[4] 
-        seconds = current_time[5]
-        clock_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        minutes = current_time[4]
+        clock_str = f"{hours:02d}:{minutes:02d}"
         self.fill_rect_to_framebuffer(25, 25, 85, 15, 0x2104)  # Dark blue
-        self.draw_text_to_framebuffer(32, 30, clock_str, self.CYAN, 0x2104)
+        self.draw_text_to_framebuffer(40, 30, clock_str, self.CYAN, 0x2104)
         
         # Session time with subtle background
         session_hours = session_seconds // 3600

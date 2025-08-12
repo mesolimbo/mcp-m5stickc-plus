@@ -26,14 +26,14 @@ def deploy_firmware(port="COM4", firmware_file="claude_monitor_main.py"):
             print(f"Error deploying firmware: {result.stderr}")
             return False
         
-        print("✓ Firmware deployed successfully")
+        print("* Firmware deployed successfully")
         
         # Reset device
         print("Resetting device...")
         cmd = f'pipenv run python -m esptool --port {port} run'
         subprocess.run(cmd, shell=True, capture_output=True)
         
-        print("✓ Device reset complete")
+        print("* Device reset complete")
         return True
         
     except Exception as e:
@@ -51,12 +51,12 @@ if __name__ == "__main__":
     print()
     
     if deploy_firmware(port, firmware):
-        print("✓ Deployment successful!")
+        print("* Deployment successful!")
         print("\nYour M5StickC PLUS is now running the Claude Monitor")
         print("- Real-time clock updates every second")
         print("- Stylish UI with header/footer")
-        print("- Button A: Acknowledge alerts")  
-        print("- Button B: Manual refresh")
+        print("- Button A: Wake display and reset timer")  
+        print("- Button B: No function")
     else:
-        print("✗ Deployment failed")
+        print("* Deployment failed")
         sys.exit(1)
