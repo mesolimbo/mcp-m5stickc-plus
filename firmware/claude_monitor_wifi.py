@@ -8,10 +8,10 @@ from machine import Pin, SPI, I2C, reset
 
 print("Claude Monitor WiFi v1.0")
 
-# Configuration (you'll need to set these)
-WIFI_SSID = "YOUR_WIFI_SSID"
-WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"  
-SERVER_URL = "http://192.168.1.100:8080"  # Your PC's IP address
+# Configuration
+WIFI_SSID = "ssid"
+WIFI_PASSWORD = "password"
+SERVER_URL = "http://127.0.0.1:8080"  # MCP server on PC
 
 class M5StickDisplay:
     def __init__(self):
