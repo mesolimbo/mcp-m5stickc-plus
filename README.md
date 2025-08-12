@@ -67,41 +67,39 @@ echo '{
 }' > ~/.claude-code/mcp.json
 ```
 
-### M5StickC PLUS Firmware
+### Quick Start
 
-#### Prerequisites
-- Install pipenv dependencies: `pipenv install`
-- Connect M5StickC PLUS via USB cable
-- Identify COM port (typically COM4 on Windows)
-
-#### Flashing MicroPython v1.26.0 (Required)
+#### 1. Flash MicroPython Firmware
 ```bash
-# Step 1: Erase flash completely (removes any UIFlow firmware)
+# Install dependencies
+pipenv install
+
+# Erase existing firmware
 pipenv run python -m esptool --port COM4 erase_flash
 
-# Step 2: Flash MicroPython v1.26.0 firmware
+# Flash MicroPython v1.26.0
 pipenv run python -m esptool --port COM4 --baud 115200 write_flash 0x1000 firmware_downloads/ESP32_GENERIC-20250809-v1.26.0.bin
-
-# Step 3: Wait for device to reboot (5 seconds)
 ```
 
-#### Upload Application Files
+#### 2. Upload Claude Monitor
 ```bash
-# Test connection first
-pipenv run ampy --port COM4 ls
+# Upload main application
+pipenv run ampy --port COM4 put firmware/claude_monitor.py main.py
 
-# Upload main application files
-pipenv run ampy --port COM4 put firmware/main.py
-pipenv run ampy --port COM4 put config/device_config.py config.py
-pipenv run ampy --port COM4 put firmware/wifi_manager.py
-pipenv run ampy --port COM4 put firmware/display.py
+# Reset device to start
+pipenv run python -m esptool --port COM4 run
 ```
 
-#### Hardware Verification
-The device uses ESP32-PICO-D4 (revision v1.1) with MAC: 90:15:06:fa:b2:68
-- Display: ST7789V2 controller (135x240 resolution)
-- Requires hardware coordinate offsets: x+52, y+40
-- Power management: AXP192 chip (critical for display operation)
+#### 3. What You'll See
+- **"CLAUDE MONITOR V1.0"** - Startup screen
+- **Real-time session data** - Time, cost, alerts, status
+- **Interactive controls** - Button A (acknowledge), Button B (refresh)
+
+#### Hardware Specs
+- **Device**: ESP32-PICO-D4 (revision v1.1) 
+- **Display**: ST7789V2 (135×240 pixels, landscape orientation)
+- **Coordinates**: Hardware offsets x+52, y+40 (proven working)
+- **Power**: AXP192 chip (critical for display operation)
 
 ## Configuration
 
@@ -208,37 +206,28 @@ Configure alert behavior
 ### File Structure
 ```
 mcp-M5StickC-PLUS/
-├── README.md
-├── TOOLS.md
-├── Pipfile               # Dependencies and dev tools
-├── src/                  # Python MCP server code
-│   ├── __init__.py
-│   ├── mcp_server.py     # Main MCP server
-│   ├── session_monitor.py # Claude Code activity monitor  
-│   ├── cost_calculator.py # Token usage and cost tracking
-│   └── utils/
-│       ├── __init__.py
-│       ├── logging.py    # Logging utilities
-│       └── config.py     # Configuration management
-├── scripts/              # Deployment and utility scripts
-│   ├── flash_device.sh   # Device flashing script
-│   ├── deploy.py         # Deployment automation
-│   └── test_connection.py # Connection testing
-├── firmware/             # M5StickC PLUS MicroPython code
-│   ├── boot.py          # Device boot configuration
-│   ├── main.py          # M5StickC PLUS main application
-│   ├── wifi_manager.py  # WiFi connection handling
-│   ├── display.py       # LCD display management
-│   ├── alerts.py        # Audio/visual alert system
-│   └── sensors.py       # Button and IMU handling
-├── config/               # Configuration files
-│   ├── mcp_config.json  # Server configuration
-│   └── device_config.py # M5StickC PLUS settings
-└── tests/                # Test files
-    ├── __init__.py
-    ├── test_mcp_server.py
-    ├── test_session_monitor.py
-    └── firmware_test.py
+├── README.md                    # Main documentation
+├── DISPLAY.md                   # Hardware display specifications  
+├── PROJECT_STRUCTURE.md         # Clean architecture overview
+├── Pipfile                      # Python dependencies
+├── src/
+│   └── mcp_server.py           # MCP server for Claude Code integration
+├── firmware/                    # M5StickC PLUS MicroPython code
+│   ├── claude_monitor.py       # Main application (readable text UI)
+│   ├── claude_monitor_wifi.py  # WiFi-enabled version
+│   ├── display.py              # Display driver
+│   ├── wifi_manager.py         # WiFi management
+│   ├── sensors.py              # Button handling
+│   ├── alerts.py               # Alert system
+│   └── boot.py                 # Device boot config
+├── config/
+│   ├── device_config.py        # M5StickC PLUS settings
+│   └── credentials.sample.txt  # WiFi credentials template
+├── scripts/
+│   ├── flash_device.sh         # Device flashing
+│   └── test_connection.py      # Connection testing
+└── firmware_downloads/
+    └── ESP32_GENERIC-*.bin     # MicroPython firmware binaries
 ```
 
 ### Testing
