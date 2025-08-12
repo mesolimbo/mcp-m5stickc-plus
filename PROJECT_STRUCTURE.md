@@ -36,23 +36,44 @@
 
 ## Current Status
 
-✅ **Working**: High-performance framebuffer-based Claude Monitor  
-✅ **Working**: Real-time clock and session tracking with smooth updates
-✅ **Working**: Stylish UI with header/footer design
-✅ **Working**: Interactive button controls (A: acknowledge, B: refresh)
-✅ **Working**: 26MHz SPI with instant display updates
+✅ **Production Ready**: High-performance framebuffer-based Claude Pro Session Monitor
+✅ **Working**: Real-time clock updating every second with smooth animations
+✅ **Working**: Stylish UI with blue header, gray footer, and color-coded sections
+✅ **Working**: Power-saving 60-second auto-sleep with Button A wake functionality
+✅ **Working**: Work-friendly audio alerts (single quiet beep per alert)
+✅ **Working**: 26MHz SPI with instant display updates and optimized rendering
+✅ **Working**: Session tracking with statistics (time, commands, files, tokens, productivity)
 
-🚧 **Next**: WiFi integration for real Claude Code session tracking
+🚧 **Future Enhancement**: WiFi integration for real Claude Code session tracking
 
 ## Usage
 
-1. **Production**: `claude_monitor_main.py` - Fast framebuffer version with stylish UI
-2. **Legacy**: `claude_monitor.py` - Original slower character-based version
-3. **Future**: WiFi integration with MCP server for live session data
+1. **Production**: `claude_monitor_main.py` - High-performance framebuffer version with power management
+2. **Legacy**: `claude_monitor.py` - Original character-based version (for reference)
+3. **Deployment**: `scripts/deploy_firmware.py` - Clean deployment script
+4. **Future**: WiFi version for live MCP server integration
+
+## Device Behavior
+
+### Display Management
+- **Auto-sleep**: Display turns off after 60 seconds of inactivity
+- **Button A**: Press anytime to wake display and reset 60-second timer  
+- **Timer reset**: Each Button A press resets countdown (press at 45s = sleep at 105s)
+- **Visual feedback**: Stylish UI with real-time clock, session stats, progress bars
+
+### Audio Alerts
+- **Startup**: Pleasant rising tone melody on boot
+- **New alerts**: Single quiet beep (800Hz, 100ms) - work-friendly
+- **No repetition**: Each alert beeps only once when it first appears
+
+### Session Simulation
+- **Real-time tracking**: Session timer, command count, file edits, productivity
+- **Token counter**: Live token usage simulation
+- **Status indicators**: Color-coded active/idle status
 
 ## Clean Architecture
 
 - **Firmware**: Production-ready MicroPython applications (test files removed)
-- **Server**: MCP integration for Claude Code session data
+- **Server**: MCP integration for Claude Code session data (future)
 - **Config**: Environment-specific settings  
 - **Clean**: All experimental and debug code removed

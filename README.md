@@ -1,25 +1,31 @@
-# Claude Session Timer & Alert MCP Server
+# Claude Pro Session Monitor for M5StickC PLUS
 
-An MCP server that transforms the M5StickC PLUS into a smart development companion that tracks Claude Code session duration, estimates costs, and provides audio alerts for command approvals.
+A high-performance framebuffer-based session monitor that transforms the M5StickC PLUS into a smart development companion for Claude Pro users. Features instant display updates, power-saving sleep mode, and work-friendly audio alerts.
 
 ## Features
 
-### Session Tracking
-- **Real-time Duration Tracking**: Automatically tracks active Claude Code session time
-- **Cost Estimation**: Calculates approximate session costs based on token usage and model pricing
-- **Visual Display**: Shows current session stats on the M5StickC PLUS LCD (135x240)
-- **Session History**: Maintains log of previous sessions with duration and cost data
-- **Battery Level**: Charge remaining on device
+### Session Monitoring
+- **Real-time Session Tracking**: Live session timer with hours, minutes, and seconds
+- **Live Clock Display**: Real-time clock that updates every second  
+- **Session Statistics**: Command count, files edited, productivity metrics
+- **Token Usage Tracking**: Live token consumption counter
+- **Visual Status Indicators**: Color-coded status (active/idle) with styled UI
 
-### Command Approval Alerts
-- **Visual Notifications**: Pale green text display with blinking icon when Claude is waiting for user approval to run commands
-- **Quiet Audio Alerts**: Very quiet tone notifications to avoid disturbing coworkers
-- **Customizable Alerts**: Different visual patterns and quiet tones for different command types (bash, file operations, etc.)
-- **Timeout Warnings**: Escalating visual alerts if approval is pending too long
+### High-Performance Display
+- **Framebuffer Rendering**: Instant screen updates using 26MHz SPI
+- **Stylish UI**: Blue header, gray footer, color-coded status sections
+- **Smooth Animations**: Real-time clock ticking, progress bars, status changes
+- **Power Management**: 60-second auto-sleep with instant wake
 
-### Physical Controls
-- **Press large button**: Disable audio alerts temporarily (visual alerts remain)
-- **Auto-detection**: Automatically starts/stops based on Claude Code activity
+### Audio Alerts
+- **Work-Friendly Beeps**: Single quiet tone for new alerts (800Hz, 100ms)
+- **Startup Melody**: Pleasant rising tone sequence on boot
+- **Office-Appropriate**: Low volume (25% duty cycle) to avoid disturbing coworkers
+
+### Power-Saving Controls
+- **Button A**: Wake display and reset 60-second sleep timer
+- **Auto-Sleep**: Display automatically turns off after 60 seconds of inactivity
+- **Instant Wake**: Press A anytime to immediately wake display and reset timer
 
 ## Architecture
 
@@ -81,19 +87,22 @@ pipenv run python -m esptool --port COM4 erase_flash
 pipenv run python -m esptool --port COM4 --baud 115200 write_flash 0x1000 firmware_downloads/ESP32_GENERIC-20250809-v1.26.0.bin
 ```
 
-#### 2. Upload Claude Monitor
+#### 2. Deploy Claude Pro Monitor
 ```bash
-# Upload main application
-pipenv run ampy --port COM4 put firmware/claude_monitor.py main.py
+# Option 1: Use deployment script
+python scripts/deploy_firmware.py COM4
 
-# Reset device to start
+# Option 2: Manual deployment
+pipenv run ampy --port COM4 put firmware/claude_monitor_main.py main.py
 pipenv run python -m esptool --port COM4 run
 ```
 
-#### 3. What You'll See
-- **"CLAUDE MONITOR V1.0"** - Startup screen
-- **Real-time session data** - Time, cost, alerts, status
-- **Interactive controls** - Button A (acknowledge), Button B (refresh)
+#### 3. What You'll Experience
+- **"CLAUDE PRO SESSION MONITOR V2.0"** - Stylish startup with audio
+- **Real-time display updates** - Clock ticks every second, smooth UI
+- **Power-saving mode** - Display auto-sleeps after 60 seconds
+- **Button A control** - Press anytime to wake display and reset timer
+- **Work-friendly alerts** - Single quiet beep for new alerts
 
 #### Hardware Specs
 - **Device**: ESP32-PICO-D4 (revision v1.1) 
