@@ -9,8 +9,11 @@ from machine import Pin, SPI, I2C
 class M5Display:
     """M5StickC PLUS display driver with graphics functions"""
     
-    def __init__(self, brightness=True):
+    def __init__(self, brightness=True, swap_bytes=True):
         print("Initializing M5StickC PLUS display...")
+        
+        # Store byte swap setting (like M5.Lcd.setSwapBytes)
+        self.swap_bytes = swap_bytes
         
         # AXP192 power management (CRITICAL for M5StickC PLUS)
         self.i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400000)
@@ -237,9 +240,50 @@ class M5Display:
                         for sx in range(scale):
                             self.pixel(x + col * scale + sx, y + row * scale + sy, bg_color)
     
+    def set_window(self, x, y, w, h):
+        """Set display window for direct writing (scanline streaming)"""
+        # M5StickC PLUS display offsets (back to original values)
+        x_offset = 52
+        y_offset = 40
+        
+        # Column address set
+        self._send_cmd(0x2A)
+        self._send_data((x_offset + x) >> 8)
+        self._send_data((x_offset + x) & 0xFF)
+        self._send_data((x_offset + x + w - 1) >> 8)
+        self._send_data((x_offset + x + w - 1) & 0xFF)
+        
+        # Row address set  
+        self._send_cmd(0x2B)
+        self._send_data((y_offset + y) >> 8)
+        self._send_data((y_offset + y) & 0xFF)
+        self._send_data((y_offset + y + h - 1) >> 8)
+        self._send_data((y_offset + y + h - 1) & 0xFF)
+        
+        # Memory write command
+        self._send_cmd(0x2C)
+    
+    def write(self, data):
+        """Write raw data to display (for scanline streaming)"""
+        if self.swap_bytes and len(data) >= 2:
+            # Swap bytes if needed (like M5.Lcd.setSwapBytes)
+            swapped = bytearray(len(data))
+            for i in range(0, len(data), 2):
+                if i + 1 < len(data):
+                    swapped[i] = data[i + 1]
+                    swapped[i + 1] = data[i]
+                else:
+                    swapped[i] = data[i]
+            data = swapped
+        
+        self.cs.value(0)
+        self.dc.value(1)
+        self.spi.write(data)
+        self.cs.value(1)
+    
     def show(self):
         """Transfer framebuffer to display"""
-        # Set window with M5StickC PLUS offsets
+        # Set window with M5StickC PLUS offsets for framebuffer
         self._send_cmd(0x2A)  # Column address set
         self._send_data(52 >> 8)
         self._send_data(52 & 0xFF)
@@ -254,7 +298,7 @@ class M5Display:
         
         self._send_cmd(0x2C)  # Memory write
         
-        # Send framebuffer data
+        # Send framebuffer data directly (no byte swapping)
         self.cs.value(0)
         self.dc.value(1)
         self.spi.write(self.framebuffer)
@@ -266,6 +310,86 @@ class M5Display:
             self.i2c.writeto_mem(0x34, 0x95, bytes([0x02]))  # Backlight ON
         else:
             self.i2c.writeto_mem(0x34, 0x95, bytes([0x00]))  # Backlight OFF
+    
+    def draw_bitmap(self, x, y, width, height, bitmap_data):
+        """Draw RGB565 bitmap image"""
+        if not isinstance(bitmap_data, (bytes, bytearray)):
+            raise ValueError("Bitmap data must be bytes or bytearray")
+        
+        expected_size = width * height * 2  # 2 bytes per pixel for RGB565
+        if len(bitmap_data) < expected_size:
+            raise ValueError(f"Bitmap data too small: got {len(bitmap_data)}, expected {expected_size}")
+        
+        for py in range(height):
+            for px in range(width):
+                screen_x = x + px
+                screen_y = y + py
+                
+                if 0 <= screen_x < self.width and 0 <= screen_y < self.height:
+                    # Calculate bitmap index (2 bytes per pixel)
+                    bitmap_index = (py * width + px) * 2
+                    
+                    # Extract RGB565 color (little endian format)
+                    low_byte = bitmap_data[bitmap_index]
+                    high_byte = bitmap_data[bitmap_index + 1]
+                    color = (high_byte << 8) | low_byte
+                    
+                    self.pixel(screen_x, screen_y, color)
+    
+    def draw_bitmap_scaled(self, x, y, width, height, bitmap_data, scale_x=1, scale_y=1):
+        """Draw RGB565 bitmap image with scaling"""
+        if not isinstance(bitmap_data, (bytes, bytearray)):
+            raise ValueError("Bitmap data must be bytes or bytearray")
+        
+        expected_size = width * height * 2
+        if len(bitmap_data) < expected_size:
+            raise ValueError(f"Bitmap data too small: got {len(bitmap_data)}, expected {expected_size}")
+        
+        for py in range(height):
+            for px in range(width):
+                # Calculate bitmap index
+                bitmap_index = (py * width + px) * 2
+                
+                # Extract RGB565 color (little endian format)
+                low_byte = bitmap_data[bitmap_index]
+                high_byte = bitmap_data[bitmap_index + 1]
+                color = (high_byte << 8) | low_byte
+                
+                # Draw scaled pixel(s)
+                for sy in range(scale_y):
+                    for sx in range(scale_x):
+                        screen_x = x + px * scale_x + sx
+                        screen_y = y + py * scale_y + sy
+                        
+                        if 0 <= screen_x < self.width and 0 <= screen_y < self.height:
+                            self.pixel(screen_x, screen_y, color)
+    
+    def draw_rgb565_file(self, path, x=0, y=0, w=None, h=None):
+        """Draw RGB565 file using scanline streaming (from cheatsheet)"""
+        if w is None:
+            w = self.width
+        if h is None:
+            h = self.height
+            
+        line_bytes = w * 2
+        
+        try:
+            with open(path, 'rb') as f:
+                for row in range(h):
+                    buf = f.read(line_bytes)
+                    if not buf or len(buf) < line_bytes:
+                        break
+                    
+                    # Set window for this scanline
+                    self.set_window(x, y + row, w, 1)
+                    # Write scanline directly
+                    self.write(buf)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error drawing RGB565 file: {e}")
+            return False
 
 
 # Color constants (RGB565 format)
@@ -291,6 +415,41 @@ class Colors:
 def rgb565(r, g, b):
     """Convert RGB (0-255) to RGB565 format"""
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
+
+def create_rgb565_bitmap(width, height, fill_color=0x0000):
+    """Create an empty RGB565 bitmap"""
+    size = width * height * 2
+    bitmap = bytearray(size)
+    
+    # Fill with color if specified
+    if fill_color != 0x0000:
+        high_byte = (fill_color >> 8) & 0xFF
+        low_byte = fill_color & 0xFF
+        
+        for i in range(0, size, 2):
+            bitmap[i] = low_byte      # Little endian
+            bitmap[i + 1] = high_byte
+    
+    return bitmap
+
+def load_rgb565_file(filename):
+    """Load RGB565 bitmap from file"""
+    try:
+        with open(filename, 'rb') as f:
+            return f.read()
+    except OSError as e:
+        print(f"Error loading bitmap file {filename}: {e}")
+        return None
+
+def save_rgb565_file(filename, bitmap_data):
+    """Save RGB565 bitmap to file"""
+    try:
+        with open(filename, 'wb') as f:
+            f.write(bitmap_data)
+        return True
+    except OSError as e:
+        print(f"Error saving bitmap file {filename}: {e}")
+        return False
 
 def hsv_to_rgb565(h, s, v):
     """Convert HSV to RGB565 (h: 0-360, s,v: 0-1)"""

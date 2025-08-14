@@ -21,6 +21,7 @@ esptool = "*"
 aiohttp = "*"
 psutil = "*"
 mcp = "*"
+pillow = "*"
 
 [dev-packages]
 pytest = ">=7.4.0"

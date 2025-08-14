@@ -404,10 +404,22 @@ class RainbowScene(DemoScene):
 
 
 class VolcanoScene(DemoScene):
-    """Volcano scene with La Cucaracha music"""
+    """Volcano scene with La Cucaracha music and actual image rendering"""
     
     def __init__(self, display):
         super().__init__(display)
+        
+        # Try to load small volcano image (memory safe)
+        try:
+            from small_volcano_image import small_volcano, SMALL_WIDTH, SMALL_HEIGHT
+            self.volcano_image = small_volcano
+            self.image_width = SMALL_WIDTH
+            self.image_height = SMALL_HEIGHT
+            self.has_image = True
+            print(f"Small volcano image loaded: {SMALL_WIDTH}x{SMALL_HEIGHT}")
+        except (ImportError, MemoryError) as e:
+            self.has_image = False
+            print(f"Volcano image not available: {e}, using procedural rendering")
         
         # Initialize buzzer for La Cucaracha
         try:
@@ -455,57 +467,75 @@ class VolcanoScene(DemoScene):
         """Render volcano scene with La Cucaracha"""
         print("Rendering: Volcano Scene")
         
-        # Clear screen and create volcano landscape using framebuffer
-        self.display.clear(Colors.BLACK)
-        
-        # Draw sky gradient
-        for y in range(60):
-            # Sky blue gradient
-            blue_intensity = 100 + int(100 * (60 - y) / 60)
-            sky_color = rgb565(50, 100, min(255, blue_intensity))
-            self.display.line(0, y, 135, y, sky_color)
-        
-        # Draw volcano mountain
-        peak_x = 67  # Center of screen
-        for y in range(60, 180):
-            for x in range(135):
-                # Calculate distance from volcano peak
-                dist_from_peak = abs(x - peak_x)
-                mountain_width = (y - 60) * 0.8  # Mountain gets wider as we go down
-                
-                if dist_from_peak < mountain_width:
-                    # Inside mountain
-                    if y < 120 and dist_from_peak < 15:
-                        # Crater/lava area - red/orange
-                        lava_intensity = 255 - int(dist_from_peak * 8)
-                        volcano_color = rgb565(lava_intensity, lava_intensity // 3, 0)
-                    else:
-                        # Mountain slopes - dark gray/brown
-                        rock_intensity = 60 + int((180 - y) / 4)
-                        volcano_color = rgb565(rock_intensity, rock_intensity - 10, rock_intensity - 20)
+        if self.has_image:
+            # Use actual image rendering
+            print("Using RGB565 bitmap image")
+            self.display.clear(Colors.BLACK)
+            
+            # Calculate position to center the small image
+            start_x = (135 - self.image_width) // 2
+            start_y = (240 - self.image_height) // 2
+            
+            # Draw the small volcano image (centered)
+            self.display.draw_bitmap(start_x, start_y, self.image_width, self.image_height, self.volcano_image)
+            
+            # Add title overlay
+            self.display.rect(0, 0, 135, 22, Colors.BLACK, filled=True)
+            self.display.text(15, 5, "BITMAP VOLCANO", Colors.YELLOW)
+            
+            # Add format info
+            self.display.rect(0, 218, 135, 22, Colors.BLACK, filled=True)
+            self.display.text(5, 222, "RGB565 IMAGE", Colors.CYAN)
+            
+        else:
+            # Fallback to procedural rendering
+            print("Using procedural volcano rendering")
+            self.display.clear(Colors.BLACK)
+            
+            # Draw sky gradient
+            for y in range(60):
+                blue_intensity = 100 + int(100 * (60 - y) / 60)
+                sky_color = rgb565(50, 100, min(255, blue_intensity))
+                self.display.line(0, y, 135, y, sky_color)
+            
+            # Draw volcano mountain
+            peak_x = 67
+            for y in range(60, 180):
+                for x in range(135):
+                    dist_from_peak = abs(x - peak_x)
+                    mountain_width = (y - 60) * 0.8
                     
-                    self.display.pixel(x, y, volcano_color)
-                else:
-                    # Sky continuation
-                    blue_intensity = 100 + int(50 * (180 - y) / 120)
-                    sky_color = rgb565(80, 120, min(255, blue_intensity))
-                    self.display.pixel(x, y, sky_color)
-        
-        # Draw foreground vegetation
-        for y in range(180, 240):
-            for x in range(135):
-                # Green vegetation with some variation
-                green_base = 80 + int((x + y) % 30)
-                vegetation_color = rgb565(20, green_base, 30)
-                self.display.pixel(x, y, vegetation_color)
-        
-        # Add title
-        self.display.rect(0, 0, 135, 20, Colors.BLACK, filled=True)
-        self.display.text(25, 5, "VOLCANO VIEW", Colors.WHITE)
-        
-        # Add music title
-        self.display.rect(0, 220, 135, 20, Colors.BLACK, filled=True)
-        self.display.text(10, 225, "LA CUCARACHA", Colors.YELLOW)
+                    if dist_from_peak < mountain_width:
+                        if y < 120 and dist_from_peak < 15:
+                            # Lava area
+                            lava_intensity = 255 - int(dist_from_peak * 8)
+                            volcano_color = rgb565(lava_intensity, lava_intensity // 3, 0)
+                        else:
+                            # Mountain slopes
+                            rock_intensity = 60 + int((180 - y) / 4)
+                            volcano_color = rgb565(rock_intensity, rock_intensity - 10, rock_intensity - 20)
+                        
+                        self.display.pixel(x, y, volcano_color)
+                    else:
+                        # Sky continuation
+                        blue_intensity = 100 + int(50 * (180 - y) / 120)
+                        sky_color = rgb565(80, 120, min(255, blue_intensity))
+                        self.display.pixel(x, y, sky_color)
+            
+            # Draw foreground vegetation
+            for y in range(180, 240):
+                for x in range(135):
+                    green_base = 80 + int((x + y) % 30)
+                    vegetation_color = rgb565(20, green_base, 30)
+                    self.display.pixel(x, y, vegetation_color)
+            
+            # Add title
+            self.display.rect(0, 0, 135, 20, Colors.BLACK, filled=True)
+            self.display.text(20, 5, "PROCEDURAL", Colors.WHITE)
+            
+            # Add music title
+            self.display.rect(0, 220, 135, 20, Colors.BLACK, filled=True)
+            self.display.text(10, 225, "LA CUCARACHA", Colors.YELLOW)
         
         # Show the volcano scene
         self.display.show()
@@ -515,8 +545,12 @@ class VolcanoScene(DemoScene):
         
         # Final message
         self.display.rect(25, 100, 85, 40, Colors.BLACK, filled=True)
-        self.display.text(30, 110, "BEAUTIFUL", Colors.WHITE)
-        self.display.text(35, 125, "VOLCANO!", Colors.WHITE)
+        if self.has_image:
+            self.display.text(30, 110, "BITMAP", Colors.WHITE)
+            self.display.text(35, 125, "VOLCANO!", Colors.WHITE)
+        else:
+            self.display.text(30, 110, "BEAUTIFUL", Colors.WHITE)
+            self.display.text(35, 125, "VOLCANO!", Colors.WHITE)
         self.display.show()
     
     def play_la_cucaracha(self):
