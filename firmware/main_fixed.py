@@ -1,10 +1,10 @@
 """
-Main entry point for M5StickC PLUS modular graphics demo
-Imports and runs the demo module
+Main entry point for M5StickC PLUS demo
+Uses original working framebuffer approach
 """
 
-print("M5StickC PLUS Modular Demo Starting...")
-print("Importing demo module...")
+print("M5StickC PLUS Demo Starting...")
+print("Using original framebuffer graphics...")
 
 try:
     from demo import main
@@ -12,7 +12,7 @@ try:
     main()
 except ImportError as e:
     print(f"Import error: {e}")
-    print("Make sure both graphics.py and demo.py are uploaded to the device")
+    print("Make sure graphics.py and demo.py are uploaded")
 except Exception as e:
     print(f"Error running demo: {e}")
     import time
