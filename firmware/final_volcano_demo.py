@@ -49,7 +49,7 @@ def main():
     try:
         # Stream the volcano image
         print("Starting scanline streaming...")
-        success = display.draw_rgb565_file('/volcano_scanline.rgb565')
+        success = display.draw_rgb565_file('/volcano-portrait.rgb565')
         
         if success:
             print("Image streamed successfully!")

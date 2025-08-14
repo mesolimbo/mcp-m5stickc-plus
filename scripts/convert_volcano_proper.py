@@ -54,7 +54,7 @@ def convert_image_to_rgb565_file(input_path, output_path, width=135, height=240)
                         # Convert to RGB565
                         rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
                         
-                        # Write as big-endian (high byte first) for correct M5StickC colors
+                        # Write as big-endian (high byte first) - CONFIRMED correct for M5StickC Plus
                         f.write(bytes(((rgb565 >> 8) & 0xFF, rgb565 & 0xFF)))
             
             file_size = os.path.getsize(output_path)
