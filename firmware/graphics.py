@@ -279,7 +279,7 @@ class M5Display:
         self.cs.value(0)
         self.dc.value(1)
         self.spi.write(data)
-        self.cs.value(1)
+        self.cs.value(1)  # Properly end SPI transaction
     
     def show(self):
         """Transfer framebuffer to display"""

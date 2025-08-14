@@ -16,8 +16,8 @@ class DemoManager:
     def __init__(self):
         print("Initializing Demo Manager...")
         
-        # Initialize display using graphics module
-        self.display = M5Display(brightness=True)
+        # Initialize display using graphics module (no byte swapping for big-endian RGB565)
+        self.display = M5Display(brightness=True, swap_bytes=False)
         
         # Initialize button
         self.button_a = Pin(37, Pin.IN, Pin.PULL_UP)
@@ -59,7 +59,7 @@ class DemoManager:
                 if hasattr(self.scenes[self.current_scene], 'update'):
                     self.scenes[self.current_scene].update()
                 
-                time.sleep_ms(50)
+                time.sleep(0.05)
                 
                 # Periodic memory cleanup
                 if time.ticks_ms() % 10000 < 50:
@@ -249,7 +249,7 @@ class AnimationScene(DemoScene):
             # Draw new
             self.display.rect(x, 45, 8, 8, Colors.RED, filled=True)
             self.display.show()
-            time.sleep_ms(50)
+            time.sleep(0.05)
         
         # Expanding circles
         self.display.text(5, 70, "EXPANDING:", Colors.WHITE)
@@ -260,7 +260,7 @@ class AnimationScene(DemoScene):
             # Draw circle
             self.display.circle(70, 100, radius, Colors.YELLOW, filled=False)
             self.display.show()
-            time.sleep_ms(100)
+            time.sleep(0.1)
         
         # Blinking text
         self.display.text(5, 130, "BLINKING:", Colors.WHITE)
@@ -272,7 +272,7 @@ class AnimationScene(DemoScene):
                 self.display.rect(5, 145, 125, 15, Colors.BLACK, filled=True)
             
             self.display.show()
-            time.sleep_ms(300)
+            time.sleep(0.3)
         
         # Final message
         self.display.rect(0, 170, 135, 30, Colors.GREEN, filled=True)
@@ -327,7 +327,7 @@ class InteractiveScene(DemoScene):
             
             # Live update
             self.display.show()
-            time.sleep_ms(100)
+            time.sleep(0.1)
             
             # Exit if button pressed
             if self.button_a.value() == 0:
@@ -404,22 +404,18 @@ class RainbowScene(DemoScene):
 
 
 class VolcanoScene(DemoScene):
-    """Volcano scene with La Cucaracha music and actual image rendering"""
+    """Volcano scene with La Cucaracha music and RGB565 scanline streaming"""
     
     def __init__(self, display):
         super().__init__(display)
         
-        # Try to load small volcano image (memory safe)
-        try:
-            from small_volcano_image import small_volcano, SMALL_WIDTH, SMALL_HEIGHT
-            self.volcano_image = small_volcano
-            self.image_width = SMALL_WIDTH
-            self.image_height = SMALL_HEIGHT
-            self.has_image = True
-            print(f"Small volcano image loaded: {SMALL_WIDTH}x{SMALL_HEIGHT}")
-        except (ImportError, MemoryError) as e:
-            self.has_image = False
-            print(f"Volcano image not available: {e}, using procedural rendering")
+        # Check for RGB565 portrait volcano file
+        self.volcano_file = '/volcano-portrait.rgb565'
+        self.has_image = self._check_volcano_file()
+        if self.has_image:
+            print("RGB565 portrait volcano available for scanline streaming")
+        else:
+            print("No volcano file found, using procedural rendering")
         
         # Initialize buzzer for La Cucaracha
         try:
@@ -430,6 +426,18 @@ class VolcanoScene(DemoScene):
             self.buzzer = None
             self.buzzer_available = False
             print("Buzzer not available for volcano scene")
+    
+    def _check_volcano_file(self):
+        """Check if volcano RGB565 file exists"""
+        try:
+            with open(self.volcano_file, 'rb') as f:
+                # Just check if file exists and has correct size
+                f.seek(0, 2)  # Seek to end
+                size = f.tell()
+                expected_size = 135 * 240 * 2  # RGB565 format
+                return size == expected_size
+        except:
+            return False
         
         # La Cucaracha melody (frequencies in Hz)
         self.la_cucaracha = [
@@ -468,24 +476,32 @@ class VolcanoScene(DemoScene):
         print("Rendering: Volcano Scene")
         
         if self.has_image:
-            # Use actual image rendering
-            print("Using RGB565 bitmap image")
+            # Use RGB565 scanline streaming
+            print("Using RGB565 scanline streaming")
             self.display.clear(Colors.BLACK)
             
-            # Calculate position to center the small image
-            start_x = (135 - self.image_width) // 2
-            start_y = (240 - self.image_height) // 2
+            # Show loading message briefly
+            self.display.rect(30, 110, 75, 20, Colors.BLUE, filled=True)
+            self.display.text(35, 115, "LOADING...", Colors.WHITE, Colors.BLUE)
+            self.display.show()
+            time.sleep(0.5)
             
-            # Draw the small volcano image (centered)
-            self.display.draw_bitmap(start_x, start_y, self.image_width, self.image_height, self.volcano_image)
+            # Stream the portrait volcano image
+            success = self.display.draw_rgb565_file(self.volcano_file)
             
-            # Add title overlay
-            self.display.rect(0, 0, 135, 22, Colors.BLACK, filled=True)
-            self.display.text(15, 5, "BITMAP VOLCANO", Colors.YELLOW)
-            
-            # Add format info
-            self.display.rect(0, 218, 135, 22, Colors.BLACK, filled=True)
-            self.display.text(5, 222, "RGB565 IMAGE", Colors.CYAN)
+            if success:
+                print("Portrait volcano streamed successfully!")
+                
+                # DON'T call display.show() or any other display operations
+                # The image is already on screen from scanline streaming
+                # Any additional writes could overwrite the streamed image
+                
+                # Immediate delay to prevent any system interference
+                time.sleep(2)
+                print("Volcano should be visible now...")
+            else:
+                print("Failed to stream volcano image")
+                # Fall through to procedural rendering
             
         else:
             # Fallback to procedural rendering
@@ -537,21 +553,26 @@ class VolcanoScene(DemoScene):
             self.display.rect(0, 220, 135, 20, Colors.BLACK, filled=True)
             self.display.text(10, 225, "LA CUCARACHA", Colors.YELLOW)
         
-        # Show the volcano scene
+        # Show the volcano scene and play music
         self.display.show()
-        
-        # Play La Cucaracha
+        time.sleep(2)
         self.play_la_cucaracha()
         
-        # Final message
-        self.display.rect(25, 100, 85, 40, Colors.BLACK, filled=True)
+        # Extended display time for volcano viewing
         if self.has_image:
-            self.display.text(30, 110, "BITMAP", Colors.WHITE)
-            self.display.text(35, 125, "VOLCANO!", Colors.WHITE)
-        else:
-            self.display.text(30, 110, "BEAUTIFUL", Colors.WHITE)
-            self.display.text(35, 125, "VOLCANO!", Colors.WHITE)
+            print("Volcano on display for 60 seconds...")
+            time.sleep(60)  # Full 60 seconds as requested
+        
+        # Clear screen completely before exit
+        self.display.clear(Colors.BLACK)
+        
+        # Simple completion message
+        self.display.rect(30, 110, 75, 30, Colors.GREEN, filled=True)
+        self.display.text(35, 118, "VOLCANO", Colors.WHITE, Colors.GREEN)
+        self.display.text(35, 128, "DONE!", Colors.WHITE, Colors.GREEN)
         self.display.show()
+        
+        time.sleep(1)
     
     def play_la_cucaracha(self):
         """Play La Cucaracha melody"""
@@ -570,12 +591,12 @@ class VolcanoScene(DemoScene):
                 self.buzzer.duty(0)
             
             # Note duration
-            note_time = duration * 300  # 300ms per unit
-            time.sleep_ms(note_time)
+            note_time = duration * 0.3  # 300ms per unit converted to seconds
+            time.sleep(note_time)
             
             # Small gap between notes
             self.buzzer.duty(0)
-            time.sleep_ms(50)
+            time.sleep(0.05)  # 50ms converted to seconds
         
         # Stop buzzer
         self.buzzer.duty(0)
